@@ -24,14 +24,15 @@ tickers_str = ' '.join(tickers.Symbol.values)
 prices = pull_prices_viz(tickers_str, "5y")
 
 #setting layout and title
-app.title = "StockEX"
+app.title = "Stock Price Prediction App"
 app.layout = html.Div(className='main-body', children=[
     #intro section on top
     html.Div(id='title', className='title-div', children=[
-        html.H3(className='title', children="StockEX"),
+        html.H3(className='title', children="Stock Price Prediction App"),
         dcc.Markdown(className='intro', children="""
-            This website shows you the predicted and adjusted closing stock prices for a few
-            different technology companies and predict the closing price for the day.
+            This app shows you the adjusted closing stock prices for a few
+            different technology companies and predict the closing price for
+            today.
         """)
     ]),
 
