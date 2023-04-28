@@ -17,26 +17,26 @@ app = dash.Dash(name=__name__)
 periods_list = ["5 Days", "1 Month", "3 Months", "6 Months",
                 "1 Year", "2 Years", "5 Years"]
 
-#reading in NYSE stock tickers
+# reading in NYSE stock tickers
 tickers = pd.read_csv("yfinance_tickers.csv")
 tickers_str = ' '.join(tickers.Symbol.values)
-#initializing data and graph
+# initializing data and graph
 prices = pull_prices_viz(tickers_str, "5y")
 
-#setting layout and title
+# setting layout and title
 app.title = "Stock Price Prediction App"
 app.layout = html.Div(className='main-body', children=[
-    #intro section on top
+    # intro section on top
     html.Div(id='title', className='title-div', children=[
         html.H3(className='title', children="Stock Price Prediction App"),
         dcc.Markdown(className='intro', children="""
             This app shows you the adjusted closing stock prices for a few
-            different technology companies and predict the closing price for
+            different companies and predict the closing price for
             today.
         """)
     ]),
 
-    #Top div
+    # Top div
     html.Div(id='card-left', className='card-left', children=[
         html.Div(className='card', children=[
             html.Div(className='labels', children='Company Name:'),
@@ -64,7 +64,8 @@ app.layout = html.Div(className='main-body', children=[
         html.Div(className='card', children=[
             html.Div(className='labels', children="Stock Ticker:"),
             html.Br(),
-            html.Div(className='values', id='company-ticker', children='Ticker: AAPL'),
+            html.Div(className='values', id='company-ticker',
+                     children='Ticker: AAPL'),
         ]),
 
         html.Div(className='card', children=[
@@ -74,7 +75,8 @@ app.layout = html.Div(className='main-body', children=[
         ]),
 
         html.Div(className='card', children=[
-            html.Div(className='labels', children="Today's Predicted Closing Price:"),
+            html.Div(className='labels',
+                     children="Today's Predicted Closing Price:"),
             html.Br(),
             html.Div(id="predicted-price", className='values'),
         ]),
@@ -82,9 +84,10 @@ app.layout = html.Div(className='main-body', children=[
 
     html.Br(),
     html.Div(className='graph', id='prices-div',
-             children=dcc.Graph(id='prices-plot', style={'width':'100%'},
-                                config={'responsive':True})),
+             children=dcc.Graph(id='prices-plot', style={'width': '100%'},
+                                config={'responsive': True})),
 ])
+
 
 @app.callback(
     Output('prices-plot', 'figure'),
@@ -92,18 +95,18 @@ app.layout = html.Div(className='main-body', children=[
      Input('timeframe', 'value')]
 )
 def create_plot(name, timeframe):
-    #retrieving stock ticker
+    # retrieving stock ticker
     ticker = tickers[tickers.Name == name].Symbol.values[0]
 
-    #filtering prices by selected stock
-    prices_one = prices.filter(items=["Date",ticker],axis=1)
+    # filtering prices by selected stock
+    prices_one = prices.filter(items=["Date", ticker], axis=1)
 
-    #splitting time input
+    # splitting time input
     t_list = timeframe.split(' ')
-    t_qty, t_unit = int(t_list[0]),t_list[1]
+    t_qty, t_unit = int(t_list[0]), t_list[1]
 
-    #retrieving the start and end dates
-    end_date =  dt.datetime.today() #.today()
+    # retrieving the start and end dates
+    end_date = dt.datetime.today()  # .today()
     if t_unit[:3] == "Day":
         start_date = end_date - relativedelta(days=t_qty)
     elif t_unit[:5] == "Month":
@@ -111,21 +114,22 @@ def create_plot(name, timeframe):
     else:
         start_date = end_date - relativedelta(years=t_qty)
 
-    #filtering prices by start and end dates
-    mask = (prices_one['Date'] >= start_date) & (prices_one['Date'] <= end_date)
+    # filtering prices by start and end dates
+    mask = (prices_one['Date'] >= start_date) & (
+        prices_one['Date'] <= end_date)
     prices_one = prices_one.loc[mask]
 
-    #creating graph
+    # creating graph
     title = "{} Price over the last {}".format(ticker.upper(), timeframe)
     fig = px.line(prices_one, x="Date", y=ticker, title=title)
 
-    #updating graph layout (docs: https://plot.ly/python/reference/#layout)
+    # updating graph layout (docs: https://plot.ly/python/reference/#layout)
     fig["layout"].update(paper_bgcolor="#0a2863", plot_bgcolor="#0a2863",
-                         title={'xanchor':'center', 'y':0.9, 'x':0.5,
-                                'font':{'color':'white'}},
-                         xaxis={'showgrid': False, 'color':'white'},
-                         yaxis={'showgrid': False, 'color':'white',
-                                'title':'Stock Price'},
+                         title={'xanchor': 'center', 'y': 0.9, 'x': 0.5,
+                                'font': {'color': 'white'}},
+                         xaxis={'showgrid': False, 'color': 'white'},
+                         yaxis={'showgrid': False, 'color': 'white',
+                                'title': 'Stock Price'},
                          height=400)
     return fig
 
@@ -138,18 +142,18 @@ def create_plot(name, timeframe):
     [Input('company-name', 'value')]
 )
 def show_prices(name):
-    #retrieving stock ticker
+    # retrieving stock ticker
     ticker = tickers[tickers.Name == name].Symbol.values[0]
 
-    #creating the trader and loading the given stock's model
+    # creating the trader and loading the given stock's model
     trader = MLTrader(None, n=10)
     trader.load_learner(ticker)
 
-    #getting the current stock price and predicting tomorrow's price
-    current_price = round(prices[ticker].values[-1],2)
-    predicted_price = round(trader.predict_today(ticker),2)
+    # getting the current stock price and predicting tomorrow's price
+    current_price = round(prices[ticker].values[-1], 2)
+    predicted_price = round(trader.predict_today(ticker), 2)
 
-    #deciding if the predicted price is higher or lower than the current price
+    # deciding if the predicted price is higher or lower than the current price
     if predicted_price > current_price:
         color = "green"
     elif predicted_price < current_price:
@@ -157,12 +161,12 @@ def show_prices(name):
     else:
         color = "white"
 
-    #formatting strings to display
+    # formatting strings to display
     current_str = "${:,.2f}".format(current_price)
     predicted_str = "${:,.2f}".format(predicted_price)
-    predicted_style = {'color':color, 'textAlign':'center'}
+    predicted_style = {'color': color, 'textAlign': 'center'}
 
-    return current_str,predicted_str,predicted_style,ticker
+    return current_str, predicted_str, predicted_style, ticker
 
 
 if __name__ == "__main__":
